@@ -126,19 +126,8 @@ class MCG(object):
             assert os.access(constants.NOOBAA_OPERATOR_LOCAL_CLI_PATH, os.X_OK)
 
         if config.ENV_DATA['platform'].lower() == 'aws':
-            (
-                self.cred_req_obj,
-                self.aws_access_key_id,
-                self.aws_access_key
-            ) = self.request_aws_credentials()
-
             self._ocp_resource = ocp_obj
 
-            self.aws_s3_resource = boto3.resource(
-                's3', endpoint_url="https://s3.amazonaws.com",
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_access_key
-            )
             logger.info('Checking whether RGW pod is not present on AWS platform')
             pods = pod.get_pods_having_label(label=constants.RGW_APP_LABEL, namespace=self.namespace)
             assert len(pods) == 0, 'RGW pod should not exist on AWS platform'
