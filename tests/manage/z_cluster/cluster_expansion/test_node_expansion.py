@@ -2,7 +2,7 @@ import logging
 import pytest
 
 from tests import helpers
-from ocs_ci.framework.testlib import tier1, ignore_leftovers, ManageTest, aws_platform_required
+from ocs_ci.framework.testlib import tier1, ignore_leftovers, ManageTest
 from ocs_ci.ocs import machine as machine_utils
 from ocs_ci.framework import config
 from ocs_ci.ocs.node import add_new_node_and_label_it, add_new_node_and_label_upi
