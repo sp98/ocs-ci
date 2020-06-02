@@ -1,4 +1,5 @@
 import logging
+import pytest
 
 from tests import helpers
 from ocs_ci.framework.testlib import tier1, ignore_leftovers, ManageTest, aws_platform_required
@@ -21,7 +22,7 @@ class TestAddNode(ManageTest):
         Test for adding worker nodes to the cluster while IOs
         """
         new_nodes = 3
-        if config.ENV_DATA['platform'] == 'AWS':
+        if config.ENV_DATA['platform'].lower() == constants.AWS_PLATFORM:
             dt = config.ENV_DATA['deployment_type']
             if dt == 'ipi':
                 machines = machine_utils.get_machinesets()
@@ -39,11 +40,10 @@ class TestAddNode(ManageTest):
                 assert add_new_node_and_label_upi(node_type, new_nodes), "Add node failed"
                 logger.info(f'The worker nodes number after expansion {len(helpers.get_worker_nodes())}')
 
-        elif config.ENV_DATA['platform'] == 'vsphere':
+        elif config.ENV_DATA['platform'].lower() == constants.VSPHERE_PLATFORM:
             logger.info(f'The worker nodes number before expansion {len(helpers.get_worker_nodes())}')
             if config.ENV_DATA.get('rhel_user'):
-                node_type = constants.RHEL_OS
-            else:
-                node_type = constants.RHCOS
+                    pytest.skip("Skipping add RHEL node, code unavailable")
+            node_type = constants.RHCOS
             assert add_new_node_and_label_upi(node_type, new_nodes), "Add node failed"
             logger.info(f'The worker nodes number after expansion {len(helpers.get_worker_nodes())}')
