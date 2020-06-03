@@ -43,7 +43,7 @@ class TestAddNode(ManageTest):
         elif config.ENV_DATA['platform'].lower() == constants.VSPHERE_PLATFORM:
             logger.info(f'The worker nodes number before expansion {len(helpers.get_worker_nodes())}')
             if config.ENV_DATA.get('rhel_user'):
-                    pytest.skip("Skipping add RHEL node, code unavailable")
+                pytest.skip("Skipping add RHEL node, code unavailable")
             node_type = constants.RHCOS
             assert add_new_node_and_label_upi(node_type, new_nodes), "Add node failed"
             logger.info(f'The worker nodes number after expansion {len(helpers.get_worker_nodes())}')
