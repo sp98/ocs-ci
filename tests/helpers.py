@@ -7,6 +7,7 @@ import hashlib
 import json
 import logging
 import os
+import csv
 import re
 import statistics
 import tempfile
@@ -2333,3 +2334,54 @@ def retrieve_default_ingress_crt():
 
     with open(constants.DEFAULT_INGRESS_CRT_LOCAL_PATH, 'w') as crtfile:
         crtfile.write(decoded_crt)
+
+def delete_objs(pvc_objs):
+    """
+    Delete pvc objects
+    Args:
+        pvc_objs (list): pvc objects to delete
+    """
+    for obj in pvc_objs:
+        obj.delete()
+        obj.ocp.wait_for_delete(obj.name)
+
+
+def handle_threading(pvc_objs, target_parm, arg_parm=None):
+    """
+    For every element in a list of pvc objects, create a thread process and
+    join them together
+    Args:
+        pvc_objs (list): pvc_objects to start threads for
+        target_parm (func): function to set Thread target keyword argument
+        arg_parm (func): function to set Thread args keyword argument
+    """
+    threads = list()
+    for obj in pvc_objs:
+        thread_parms = {}
+        thread_parms['target'] = target_parm(obj)
+        if arg_parm:
+            thread_parms['args'] = arg_parm(obj)
+        process = threading.Thread(**thread_parms)
+        process.start()
+        threads.append(process)
+    for process in threads:
+        process.join()
+
+
+# TODO: Update below code with google API, to record value in spreadsheet
+# TODO: For now observing Google API limit to write more than 100 writes
+def write_csv_data(data_to_write, csv_file, adjective):
+    """
+    Write csv data to a file
+    Args:
+        data_to_write (dict): input data
+        csv_file (str): name of file to be written
+        adjective (str): text added to log message
+    """
+    with open(csv_file, "w") as fd:
+        csv_obj = csv.writer(fd)
+        for k, v in data_to_write.items():
+            csv_obj.writerow([k, v])
+    logger.info(
+        f"{adjective} data present in {csv_file}"
+    )
