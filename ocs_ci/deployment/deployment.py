@@ -806,6 +806,8 @@ def get_device_paths(worker_names):
         pattern = 'nvme-Amazon_EC2_NVMe_Instance_Storage'
     elif platform == 'vsphere':
         pattern = 'wwn'
+    elif platform == 'baremetalpsi':
+        pattern = 'virtio'
     # TODO: add patterns bare metal
     else:
         raise UnsupportedPlatformError(
