@@ -881,3 +881,6 @@ THROUGHPUT_QUERY = "(sum(rate(ceph_pool_wr_bytes[1m]) + rate(ceph_pool_rd_bytes[
 LATENCY_QUERY = "cluster:ceph_disk_latency:join_ceph_node_disk_irate1m"
 IOPS_QUERY = "sum(rate(ceph_pool_wr[1m])) + sum(rate(ceph_pool_rd[1m]))"
 USED_SPACE_QUERY = "ceph_cluster_total_used_bytes"
+
+# Scale constants
+SCALE_NODE_SELECTOR = {'node-role.kubernetes.io/app': 'app-scale'}
