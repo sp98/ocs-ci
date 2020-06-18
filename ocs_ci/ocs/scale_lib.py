@@ -91,8 +91,9 @@ class FioPodScale(object):
         """
         rbd_sc = helpers.default_storage_class(constants.CEPHBLOCKPOOL)
         cephfs_sc = helpers.default_storage_class(constants.CEPHFILESYSTEM)
-        # pvc_size = f"{random.randrange(5, 105, 5)}Gi"
         pvc_size = f"{random.randrange(15, 105, 5)}Gi"
+        fio_size = self.get_size_based_on_cls_usage()
+        fio_rate = self.get_rate_based_on_cls_iops()
         logging.info(f"Create {pods_per_iter * 4} PVCs and PODs")
         cephfs_pvcs = helpers.create_multiple_pvc_parallel(
             sc_obj=cephfs_sc, namespace=self.namespace, number_of_pvc=pods_per_iter,
@@ -134,8 +135,6 @@ class FioPodScale(object):
 
         # Appending all the pod_obj to list
         pod_objs.extend(temp_pod_objs + rbd_rwx_pods)
-        fio_size = self.get_size_based_on_cls_usage()
-        fio_rate = self.get_rate_based_on_cls_iops()
 
         # Start IO
         import time
@@ -181,6 +180,7 @@ class FioPodScale(object):
 
         """
         osd_dict = cluster.get_osd_utilization()
+        logger.info(f"Printing OSD utilization from cluster {osd_dict}")
         if custom_size_dict:
             size_dict = custom_size_dict
         else:
@@ -317,7 +317,7 @@ class FioPodScale(object):
                     else:
                         raise CephHealthException("Cluster OSDs are near full")
 
-                    # Check for 200 pods per namespace
+                    # Check for 500 pods per namespace
                     pod_objs = pod.get_all_pods(namespace=self.namespace_list[-1].namespace)
                     if len(pod_objs) >= 500:
                         self.create_and_set_namespace()
@@ -437,7 +437,7 @@ def add_worker_based_on_cpu_utilization(
                 machine.wait_for_new_node_to_be_ready(name)
             return True
         else:
-            logging.info("Enough resource available for more pod creation")
+            logging.info(f"Enough resource available for more pod creation {uti_dict}")
             return False
     elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
         pass
