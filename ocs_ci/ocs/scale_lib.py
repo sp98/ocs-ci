@@ -247,7 +247,7 @@ class FioPodScale(object):
         return rate_param
 
     def create_scale_pods(
-        self, scale_count=1500, pods_per_iter=2, instance_type='m5.4xlarge',
+        self, scale_count=1500, pods_per_iter=2, instance_type='m4.xlarge',
         io_runtime=None, start_io=None
     ):
         """
