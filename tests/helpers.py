@@ -259,7 +259,7 @@ def create_pod(
         assert (ocp.OCP(kind='pod', namespace=namespace)).wait_for_resource(
             condition=deploy_pod_status,
             resource_name=pod_name + '-1-deploy',
-            resource_count=0, timeout=300, sleep=10
+            resource_count=0, timeout=180, sleep=3
         )
         dpod_list = pod.get_all_pods(namespace=namespace)
         for dpod in dpod_list:

@@ -18,7 +18,7 @@ def fioscale(request):
 
     # Scale FIO pods in the cluster
     fioscale = FioPodScale(
-        kind=constants.DEPLOYMENTCONFIG, pod_dict_path=constants.FEDORA_DC_YAML,
+        kind=constants.POD, pod_dict_path=constants.NGINX_POD_YAML,
         node_selector=constants.SCALE_NODE_SELECTOR
     )
     fioscale.create_scale_pods(
