@@ -65,16 +65,18 @@ def uninstall_lso():
                               resource_name=constants.DEFAULT_CLUSTERNAME,
                               namespace='openshift-storage')
 
-    sc_name = storage_cluster.get().get('spec').get('storageDeviceSets')[0].get('dataPVCTemplate').get('spec').get(
-        'storageClassName')
+    sc_name = storage_cluster.get().get('spec').get(
+        'storageDeviceSets')[0].get('dataPVCTemplate').get('spec').get('storageClassName')
     sc_obj = ocp.OCP(kind=constants.STORAGECLASS,
                      resource_name=sc_name,
-                     namespace=constants.LOCAL_STORAGE_NAMESPACE)
+                     namespace=constants.LOCAL_STORAGE_NAMESPACE
+                     )
 
     lv_name = sc_obj.get().get('metadata').get('labels').get('local.storage.openshift.io/owner-name')
     lv_obj = ocp.OCP(kind=constants.LOCAL_VOLUME,
                      resource_name=lv_name,
-                     namespace=constants.LOCAL_STORAGE_NAMESPACE)
+                     namespace=constants.LOCAL_STORAGE_NAMESPACE
+                     )
 
     log.info(f"storage class: {sc_name}  local volume:{lv_name}")
 
@@ -83,12 +85,13 @@ def uninstall_lso():
 
     pv_obj_list = ocp.OCP(kind=constants.PV,
                           selector=f'storage.openshift.com/local-volume-owner-name={lv_name}',
-                          namespace=constants.LOCAL_STORAGE_NAMESPACE)
+                          namespace=constants.LOCAL_STORAGE_NAMESPACE
+                          )
     log.info("deleting local volume PVs")
-    print(pv_obj_list.get().get('items'))
+    log.info(pv_obj_list.get().get('items'))
     for pv in pv_obj_list.get().get('items'):
-        print(f"deleting pv {pv.get('metadata').get('name')}")
-        # pv_obj_list.delete(resource_name=pv.get('metadata').get('name'))
+        log.info(f"deleting pv {pv.get('metadata').get('name')}")
+        pv_obj_list.delete(resource_name=pv.get('metadata').get('name'))
 
     log.info("removing local volume from storage nodes")
     for node in storage_node_list:
@@ -107,10 +110,10 @@ def uninstall_lso():
         cmd_list = [disk_list_str, sgd_command]
         ocp_obj.exec_oc_debug_cmd(node=node, cmd_list=cmd_list)
 
-    log.info("deleting storage class")
+    log.info(f"deleting storage class {sc_name}")
     sc_obj.delete(resource_name=sc_name)
 
-    log.info("deleting local volume")
+    log.info(f"deleting local volume {lv_name}")
     lv_obj.delete(resource_name=lv_name)
 
 
