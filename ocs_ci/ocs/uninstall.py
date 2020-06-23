@@ -61,30 +61,34 @@ def uninstall_lso():
 
     """
     ocp_obj = ocp.OCP()
-    storage_cluster = ocp.OCP(kind=constants.STORAGECLUSTER, resource_name=constants.DEFAULT_CLUSTERNAME)
+    storage_cluster = ocp.OCP(kind=constants.STORAGECLUSTER,
+                              resource_name=constants.DEFAULT_CLUSTERNAME,
+                              namespace='openshift-storage')
 
-    sc_name = storage_cluster.get('spec').get('storageDeviceSets') \
-        .get().get('dataPVCTemplate').get('spec').get('storageClassName')
-    sc_obj = ocp.OCP(kind=constants.STORAGECLASS, resource_name=sc_name)
+    sc_name = storage_cluster.get().get('spec').get('storageDeviceSets')[0].get('dataPVCTemplate').get('spec').get(
+        'storageClassName')
+    sc_obj = ocp.OCP(kind=constants.STORAGECLASS,
+                     resource_name=sc_name,
+                     namespace=constants.LOCAL_STORAGE_NAMESPACE)
 
-    lv_name = sc_obj.get('metadata').get('labels').get('local.storage.openshift.io/owner-name')
-    lv_obj = ocp.OCP(kind=constants.LOCAL_VOLUME, resource_name=lv_name)
+    lv_name = sc_obj.get().get('metadata').get('labels').get('local.storage.openshift.io/owner-name')
+    lv_obj = ocp.OCP(kind=constants.LOCAL_VOLUME,
+                     resource_name=lv_name,
+                     namespace=constants.LOCAL_STORAGE_NAMESPACE)
+
     log.info(f"storage class: {sc_name}  local volume:{lv_name}")
-    device_list = lv_obj.get('spec').get('storageClassDevices').get().get('devicePaths')
+
+    device_list = lv_obj.get().get('spec').get('storageClassDevices')[0].get('devicePaths')
     storage_node_list = get_labeled_nodes(constants.OPERATOR_NODE_LABEL)
 
-    log.info("deleting local volume")
-    lv_obj.delete()
-
-    pv_obj_list = ocp.OCP(kind=constants.PV, namespace=constants.LOCAL_STORAGE_NAMESPACE,
-                          selector=f"storage.openshift.com/local-volume-owner-name={sc_name}")
+    pv_obj_list = ocp.OCP(kind=constants.PV,
+                          selector=f'storage.openshift.com/local-volume-owner-name={lv_name}',
+                          namespace=constants.LOCAL_STORAGE_NAMESPACE)
     log.info("deleting local volume PVs")
-    for pv in pv_obj_list.get():
-        log.info(f"deleting pv {pv.get('metadata').get('name')}")
-        pv_obj_list.delete(resource_name=pv.get('metadata').get('name'))
-
-    log.info("deleting storage class")
-    sc_obj.delete()
+    print(pv_obj_list.get().get('items'))
+    for pv in pv_obj_list.get().get('items'):
+        print(f"deleting pv {pv.get('metadata').get('name')}")
+        # pv_obj_list.delete(resource_name=pv.get('metadata').get('name'))
 
     log.info("removing local volume from storage nodes")
     for node in storage_node_list:
@@ -102,6 +106,12 @@ def uninstall_lso():
         log.info(f"wiping on node {node}")
         cmd_list = [disk_list_str, sgd_command]
         ocp_obj.exec_oc_debug_cmd(node=node, cmd_list=cmd_list)
+
+    log.info("deleting storage class")
+    sc_obj.delete(resource_name=sc_name)
+
+    log.info("deleting local volume")
+    lv_obj.delete(resource_name=lv_name)
 
 
 def uninstall_ocs():
