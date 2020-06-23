@@ -471,7 +471,7 @@ def get_running_pod_count_from_node(
     nodename=None, node_type=constants.WORKER_MACHINE
 ):
     """
-    Gets the node's cpu and memory utilization in percentage using oc describe node
+    Gets the node running pod count using oc describe node
 
     Args:
         nodename (str) : The node name
@@ -486,7 +486,7 @@ def get_running_pod_count_from_node(
         node.name for node in get_typed_nodes(node_type=node_type)
     ]
     obj = ocp.OCP()
-    utilization_dict = {}
+    pod_count_dict = {}
     for node in node_names:
         output = obj.exec_oc_cmd(
             command=f"describe node {node}", out_yaml_format=False
@@ -495,9 +495,9 @@ def get_running_pod_count_from_node(
             if 'Non-terminated Pods:  ' in line:
                 count_line = line.split(' ')
                 pod_count = re.findall(r'\d+', [i for i in count_line if i][2])
-        utilization_dict[node] = int(pod_count[0])
+        pod_count_dict[node] = int(pod_count[0])
 
-    return utilization_dict
+    return pod_count_dict
 
 
 def print_table_node_resource_utilization(utilization_dict, field_names):
