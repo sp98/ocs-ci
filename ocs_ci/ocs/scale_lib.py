@@ -8,7 +8,8 @@ from ocs_ci.framework import config
 from ocs_ci.ocs.resources import pod, pvc, storage_cluster
 from ocs_ci.ocs import constants, cluster, machine, node
 from ocs_ci.ocs.exceptions import (
-    UnavailableResourceException, UnexpectedBehaviour, CephHealthException
+    UnavailableResourceException, UnexpectedBehaviour, CephHealthException,
+    UnsupportedPlatformError
 )
 
 logger = logging.getLogger(__name__)
@@ -247,11 +248,12 @@ class FioPodScale(object):
         return rate_param
 
     def create_scale_pods(
-        self, scale_count=1500, pods_per_iter=2, instance_type='m4.xlarge',
+        self, scale_count=1500, pods_per_iter=2, instance_type='m5.4xlarge',
         io_runtime=None, start_io=None
     ):
         """
         Main Function with scale pod creation flow and checks to add nodes.
+        For other platforms will not be considering the instance_type param
 
         Args:
             scale_count (int): Scale pod+pvc count
@@ -277,7 +279,7 @@ class FioPodScale(object):
             for ms in self.ms_name:
                 machine.wait_for_new_node_to_be_ready(ms)
         elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
-            pass
+            raise UnsupportedPlatformError("Unsupported Platform")
 
         # Create namespace
         self.create_and_set_namespace()
@@ -301,13 +303,24 @@ class FioPodScale(object):
                 all_pod_obj.extend(pod_obj)
                 try:
                     # Check enough resources available in the dedicated app workers
-                    if add_worker_based_on_cpu_utilization(
-                        machineset_name=self.ms_name, node_count=1, expected_percent=59,
-                        role_type='app,worker'
-                    ):
-                        logging.info("Nodes added for app pod creation")
+                    if self.pod_dict_path == constants.NGINX_POD_YAML:
+                        # Below expected count value is kind of hardcoded based on the manual
+                        # execution result i.e. With m5.4xlarge instance and nginx pod
+                        if add_worker_based_on_pods_count_per_node(
+                            machineset_name=self.ms_name, node_count=1, expected_count=200,
+                            role_type='app,worker'
+                        ):
+                            logging.info("Nodes added for app pod creation")
+                        else:
+                            logging.info("Existing resource are enough to create more pods")
                     else:
-                        logging.info("Existing resource are enough to create more pods")
+                        if add_worker_based_on_cpu_utilization(
+                            machineset_name=self.ms_name, node_count=1, expected_percent=59,
+                            role_type='app,worker'
+                        ):
+                            logging.info("Nodes added for app pod creation")
+                        else:
+                            logging.info("Existing resource are enough to create more pods")
 
                     # Check for ceph cluster OSD utilization
                     if not cluster.validate_osd_utilization(osd_used=75):
@@ -430,7 +443,7 @@ def add_worker_based_on_cpu_utilization(
                 uti_high_nodes.append(node_obj.name)
             else:
                 uti_less_nodes.append(node_obj.name)
-        if len(uti_less_nodes) < 1:
+        if len(uti_less_nodes) <= 1:
             for name in machineset_name:
                 count = machine.get_replica_count(machine_set=name)
                 machine.add_node(machine_set=name, count=(count + node_count))
@@ -440,4 +453,44 @@ def add_worker_based_on_cpu_utilization(
             logging.info(f"Enough resource available for more pod creation {uti_dict}")
             return False
     elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
-        pass
+        raise UnsupportedPlatformError("Unsupported Platform")
+
+
+def add_worker_based_on_pods_count_per_node(
+    machineset_name, node_count, expected_count, role_type
+):
+    """
+    Function to evaluate number of pods up in node and add new node accordingly.
+
+    Args:
+        machineset_name (list): Machineset_names to add more nodes if required.
+        node_count (int): Additional nodes to be added
+        expected_count (int): Expected pod count in one node
+        role_type (str): To add type to the nodes getting added
+
+    Returns:
+        bool: True if Nodes gets added, else false.
+
+    """
+    # Check for POD running count on each nodes
+    if config.ENV_DATA['deployment_type'] == 'ipi' and config.ENV_DATA['platform'].lower() == 'aws':
+        app_nodes = node.get_typed_nodes(node_type=role_type)
+        pod_count_dict = node.get_running_pod_count_from_node(node_type=role_type)
+        high_count_nodes, less_count_nodes = ([] for i in range(2))
+        for node_obj in app_nodes:
+            count = pod_count_dict[f"{node_obj.name}"]
+            if count >= expected_count:
+                high_count_nodes.append(node_obj.name)
+            else:
+                less_count_nodes.append(node_obj.name)
+        if len(less_count_nodes) <= 1:
+            for name in machineset_name:
+                count = machine.get_replica_count(machine_set=name)
+                machine.add_node(machine_set=name, count=(count + node_count))
+                machine.wait_for_new_node_to_be_ready(name)
+            return True
+        else:
+            logging.info(f"Enough pods can be created with available nodes {pod_count_dict}")
+            return False
+    elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
+        raise UnsupportedPlatformError("Unsupported Platform")

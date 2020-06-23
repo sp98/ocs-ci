@@ -372,6 +372,7 @@ def get_node_resource_utilization_from_adm_top(
     Args:
         nodename (str) : The node name
         node_type (str) : The node type (e.g. master, worker)
+        print_table (bool): If True print data in table format else False.
 
     Returns:
         dict : Node name and its cpu and memory utilization in
@@ -427,6 +428,7 @@ def get_node_resource_utilization_from_oc_describe(
     Args:
         nodename (str) : The node name
         node_type (str) : The node type (e.g. master, worker)
+        print_table (bool): If True print data in table format else False.
 
     Returns:
         dict : Node name and its cpu and memory utilization in
@@ -461,6 +463,39 @@ def get_node_resource_utilization_from_oc_describe(
                 "Node Name", "CPU USAGE oc_describe", "Memory USAGE oc_describe"
             ]
         )
+
+    return utilization_dict
+
+
+def get_running_pod_count_from_node(
+    nodename=None, node_type=constants.WORKER_MACHINE
+):
+    """
+    Gets the node's cpu and memory utilization in percentage using oc describe node
+
+    Args:
+        nodename (str) : The node name
+        node_type (str) : The node type (e.g. master, worker)
+
+    Returns:
+        dict : Node name and its pod_count
+
+    """
+
+    node_names = [nodename] if nodename else [
+        node.name for node in get_typed_nodes(node_type=node_type)
+    ]
+    obj = ocp.OCP()
+    utilization_dict = {}
+    for node in node_names:
+        output = obj.exec_oc_cmd(
+            command=f"describe node {node}", out_yaml_format=False
+        ).split("\n")
+        for line in output:
+            if 'Non-terminated Pods:  ' in line:
+                count_line = line.split(' ')
+                pod_count = re.findall(r'\d+', [i for i in count_line if i][2])
+        utilization_dict[node] = int(pod_count[0])
 
     return utilization_dict
 
