@@ -600,6 +600,7 @@ VDBENCH_MIN_CAPACITY = 300  # minimum storage capacity (in GB) for the test to r
 AWS_PLATFORM = 'aws'
 VSPHERE_PLATFORM = 'vsphere'
 CLOUD_PLATFORMS = (AWS_PLATFORM)
+BAREMETALPSI_PLATFORM = 'baremetalpsi'
 
 # Default SC based on platforms
 DEFAULT_SC_AWS = "gp2"
@@ -874,18 +875,15 @@ object_version_action_list = ['PutObject', 'GetObjectVersion', 'DeleteObjectVers
 
 # Flexy config constants
 FLEXY_MNT_CONTAINER_DIR = '/mnt'
-FLEXY_MNT_PRIVATE_CONF_DIR = '/mnt/private-ocs-conf'
+FLEXY_HOST_DIR = os.path.join(DATA_DIR, 'flexy')
 FLEXY_DEFAULT_ENV_FILE = "ocs-osp.env"
 OPENSHIFT_MISC_BASE = "private-openshift-misc/v3-launch_templates/functionality-testing"
 FLEXY_BAREMETAL_UPI_TEMPLATE = "upi-on-baremetal/versioned-installer-openstack"
-FLEXY_PRIVATE_CONF_URL = "git@gitlab.cee.redhat.com:ocs/flexy-ocs-private.git"
 FLEXY_GIT_CRYPT_KEYFILE = "~/git_crypt_keyfile"
 NTP_CHRONY_CONF = os.path.join(
     TEMPLATE_DIR, "ocp-deployment", "ntp_chrony.yaml"
 )
-FLEXY_SERVICE_CONF = os.path.join(
-    DATA_DIR, "flexy_service_config.conf"
-)
+FLEXY_DEFAULT_PRIVATE_CONF_URL = 'git@gitlab.cee.redhat.com:ocs/flexy-ocs-private.git'
 
 # PSI-openstack constants
 NOVA_CLNT_VERSION = "2.0"
