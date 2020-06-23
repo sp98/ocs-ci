@@ -306,6 +306,8 @@ class FioPodScale(object):
                     if self.pod_dict_path == constants.NGINX_POD_YAML:
                         # Below expected count value is kind of hardcoded based on the manual
                         # execution result i.e. With m5.4xlarge instance and nginx pod
+                        # TODO: Revisit the expected_count value once there is support for
+                        # TODO: more pod creation in one worker node
                         if add_worker_based_on_pods_count_per_node(
                             machineset_name=self.ms_name, node_count=1, expected_count=200,
                             role_type='app,worker'
