@@ -32,6 +32,7 @@ from ocs_ci.ocs.resources.packagemanifest import (
     get_selector_for_ocs_operator,
     PackageManifest,
 )
+from ocs_ci.ocs.resources.storage_cluster import change_noobaa_endpoints_count
 from ocs_ci.ocs.resources.pod import (
     get_all_pods,
     validate_pods_are_respinned_and_running_state
@@ -555,6 +556,10 @@ class Deployment(object):
         )
         # patch gp2/thin storage class as 'non-default'
         self.patch_default_sc_to_non_default()
+
+        nb_eps = config.DEPLOYMENT.get('noobaa_endpoints')
+        if nb_eps > 1:
+            change_noobaa_endpoints_count(nb_eps)
 
     def destroy_cluster(self, log_level="DEBUG"):
         """

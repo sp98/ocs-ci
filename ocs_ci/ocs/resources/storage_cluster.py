@@ -139,10 +139,33 @@ def ocs_install_verification(
     # noobaa
     assert pod.wait_for_resource(
         condition=constants.STATUS_RUNNING,
-        selector=constants.NOOBAA_APP_LABEL,
-        resource_count=2,
+        selector=constants.NOOBAA_DB_LABEL,
+        resource_count=1,
         timeout=timeout
     )
+    assert pod.wait_for_resource(
+        condition=constants.STATUS_RUNNING,
+        selector=constants.NOOBAA_OPERATOR_POD_LABEL,
+        resource_count=1,
+        timeout=timeout
+    )
+    assert pod.wait_for_resource(
+        condition=constants.STATUS_RUNNING,
+        selector=constants.NOOBAA_CORE_POD_LABEL,
+        resource_count=1,
+        timeout=timeout
+    )
+    # check noobaa CR for min number of noobaa endpoint pods
+    nb_obj = OCP(kind='noobaa', namespace=defaults.ROOK_CLUSTER_NAMESPACE)
+    min_eps = nb_obj.get().get('items')[0].get('spec').get('endpoints').get('minCount')
+
+    assert pod.wait_for_resource(
+        condition=constants.STATUS_RUNNING,
+        selector=constants.NOOBAA_ENDPOINT_POD_LABEL,
+        resource_count=min_eps,
+        timeout=timeout
+    )
+
     # mons
     assert pod.wait_for_resource(
         condition=constants.STATUS_RUNNING,
