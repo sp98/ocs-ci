@@ -557,9 +557,9 @@ class Deployment(object):
         # patch gp2/thin storage class as 'non-default'
         self.patch_default_sc_to_non_default()
 
-        nb_eps = config.DEPLOYMENT.get('noobaa_endpoints')
-        if nb_eps > 1:
-            change_noobaa_endpoints_count(nb_eps)
+        min_nb_eps = config.DEPLOYMENT.get('min_noobaa_endpoints')
+        max_nb_eps = config.DEPLOYMENT.get('max_noobaa_endpoints')
+        change_noobaa_endpoints_count(min_nb_eps=min_nb_eps, max_nb_eps=max_nb_eps)
 
     def destroy_cluster(self, log_level="DEBUG"):
         """
