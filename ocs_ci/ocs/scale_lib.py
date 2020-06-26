@@ -248,7 +248,7 @@ class FioPodScale(object):
         return rate_param
 
     def create_scale_pods(
-        self, scale_count=1500, pods_per_iter=2, instance_type='m5.4xlarge',
+        self, scale_count=1500, pods_per_iter=2, instance_type='m4.xlarge',
         io_runtime=None, start_io=None
     ):
         """
@@ -280,6 +280,10 @@ class FioPodScale(object):
                 machine.wait_for_new_node_to_be_ready(ms)
         elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
             raise UnsupportedPlatformError("Unsupported Platform")
+        elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'baremetal':
+            raise UnsupportedPlatformError("Unsupported Platform")
+        elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'azure':
+            raise UnsupportedPlatformError("Unsupported Platform")
 
         # Create namespace
         self.create_and_set_namespace()
@@ -305,11 +309,11 @@ class FioPodScale(object):
                     # Check enough resources available in the dedicated app workers
                     if self.pod_dict_path == constants.NGINX_POD_YAML:
                         # Below expected count value is kind of hardcoded based on the manual
-                        # execution result i.e. With m5.4xlarge instance and nginx pod
+                        # execution result i.e. With m4.xlarge instance and nginx pod
                         # TODO: Revisit the expected_count value once there is support for
                         # TODO: more pod creation in one worker node
                         if add_worker_based_on_pods_count_per_node(
-                            machineset_name=self.ms_name, node_count=1, expected_count=200,
+                            machineset_name=self.ms_name, node_count=1, expected_count=125,
                             role_type='app,worker'
                         ):
                             logging.info("Nodes added for app pod creation")
@@ -456,6 +460,10 @@ def add_worker_based_on_cpu_utilization(
             return False
     elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
         raise UnsupportedPlatformError("Unsupported Platform")
+    elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'baremetal':
+        raise UnsupportedPlatformError("Unsupported Platform")
+    elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'azure':
+        raise UnsupportedPlatformError("Unsupported Platform")
 
 
 def add_worker_based_on_pods_count_per_node(
@@ -495,4 +503,8 @@ def add_worker_based_on_pods_count_per_node(
             logging.info(f"Enough pods can be created with available nodes {pod_count_dict}")
             return False
     elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'vsphere':
+        raise UnsupportedPlatformError("Unsupported Platform")
+    elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'baremetal':
+        raise UnsupportedPlatformError("Unsupported Platform")
+    elif config.ENV_DATA['deployment_type'] == 'upi' and config.ENV_DATA['platform'].lower() == 'azure':
         raise UnsupportedPlatformError("Unsupported Platform")
